@@ -108,8 +108,8 @@ abstract class Rowset implements XmlaConstants {
             String propertyName = propertyEntry.getKey();
             final PropertyDefinition propertyDef =
                 Util.lookup(PropertyDefinition.class, propertyName);
-            if (propertyDef == null) {
-                throw Util.newError(
+            if (propertyDef == null) { // implement support for DISCOVER_PROPERTIES.DbpropMsmdSubqueries (denfition.propertyName)
+                throw Util.newError(   // or stop throwing an exception and just log and/or ignore unsupported properties
                     "Rowset '" + definition.name()
                     + "' does not support property '" + propertyName + "'");
             }

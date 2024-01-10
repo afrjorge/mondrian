@@ -67,7 +67,6 @@ public class XmlaHandler {
     public static final String JDBC_LOCALE = "locale";
 
     final ConnectionFactory connectionFactory;
-    private final String prefix;
 
     public static XmlaExtra getExtra(OlapConnection connection) {
         try {
@@ -654,9 +653,7 @@ public class XmlaHandler {
      */
     public XmlaHandler(ConnectionFactory connectionFactory, String prefix)
     {
-        assert prefix != null;
         this.connectionFactory = connectionFactory;
-        this.prefix = prefix;
     }
 
     /**
@@ -769,9 +766,9 @@ public class XmlaHandler {
             writer.startDocument();
 
             writer.startElement(
-                prefix + ":ExecuteResponse",
-                "xmlns:" + prefix, NS_XMLA);
-            writer.startElement(prefix + ":return");
+                "ExecuteResponse",
+                "xmlns", NS_XMLA);
+            writer.startElement("return");
             boolean rowset =
                 request.isDrillThrough()
                 || Format.Tabular.name().equals(
@@ -2912,9 +2909,9 @@ public class XmlaHandler {
         writer.startDocument();
 
         writer.startElement(
-            prefix + ":DiscoverResponse",
-            "xmlns:" + prefix, NS_XMLA);
-        writer.startElement(prefix + ":return");
+            "DiscoverResponse",
+            "xmlns", NS_XMLA);
+        writer.startElement("return");
         writer.startElement(
             "root",
             "xmlns", NS_XMLA_ROWSET,

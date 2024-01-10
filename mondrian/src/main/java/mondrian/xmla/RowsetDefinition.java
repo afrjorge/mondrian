@@ -12,6 +12,11 @@
 package mondrian.xmla;
 
 import mondrian.olap.*;
+import mondrian.olap4j.MondrianOlap4jConnection;
+import mondrian.rolap.RolapConnection;
+import mondrian.rolap.RolapSchema;
+import mondrian.server.FileRepository;
+import mondrian.server.Repository;
 import mondrian.util.Composite;
 
 import org.olap4j.OlapConnection;
@@ -32,6 +37,7 @@ import org.olap4j.metadata.Property;
 import org.olap4j.metadata.Schema;
 import org.olap4j.metadata.XmlaConstants;
 
+import java.io.IOException;
 import java.lang.reflect.*;
 import java.sql.SQLException;
 import java.text.Format;
@@ -288,6 +294,30 @@ public enum RowsetDefinition {
     {
         public Rowset getRowset(XmlaRequest request, XmlaHandler handler) {
             return new DiscoverLiteralsRowset(request, handler);
+        }
+    },
+
+    /**
+     *
+     *
+     *
+     * restrictions
+     *
+     * Not supported
+     */
+    DISCOVER_XML_METADATA(
+        23,
+        "Returns an XML document describing a requested object. The rowset that is returned always consists of one row and one column.", // TODO review
+        new Column[]{
+            DiscoverXmlMetadataRowset.METADATA,
+            DiscoverXmlMetadataRowset.ObjectType,
+            DiscoverXmlMetadataRowset.DatabaseID,
+            DiscoverXmlMetadataRowset.ObjectExpansion
+        },
+        null /* not sorted */)
+    {
+        public Rowset getRowset(XmlaRequest request, XmlaHandler handler) {
+            return new DiscoverXmlMetadataRowset(request, handler);
         }
     },
 
@@ -2198,6 +2228,71 @@ public enum RowsetDefinition {
             default:
                 super.setProperty(propertyDef, value);
             }
+        }
+    }
+
+    static class DiscoverXmlMetadataRowset extends Rowset {
+        private final Util.Functor1<Boolean, Catalog> catalogNameCond;
+        private static final Column METADATA;
+        private static final Column ObjectType;
+        private static final Column DatabaseID;
+
+        private static final Column ObjectExpansion;
+
+        DiscoverXmlMetadataRowset(XmlaRequest request, XmlaHandler handler) {
+            super(RowsetDefinition.DISCOVER_XML_METADATA, request, handler);
+            this.catalogNameCond = this.makeCondition(RowsetDefinition.CATALOG_NAME_GETTER, DatabaseID);
+        }
+
+        public void populateImpl(XmlaResponse response, OlapConnection connection, List<Row> rows)
+            throws XmlaException, OlapException {
+            String objectType = this.getRestrictionValueAsString(ObjectType);
+            if (objectType != null && objectType.equals("Database")) {
+                MondrianServer mondrianServer = MondrianServer.forConnection(((MondrianOlap4jConnection)connection).getMondrianConnection());
+                Repository repository = mondrianServer.getRepository();
+                if (repository instanceof FileRepository) {
+                    FileRepository fileRepository = (FileRepository)repository;
+                    String repositoryContent = fileRepository.getContent();
+                    Row row = new Row();
+                    row.set(METADATA.name, repositoryContent);
+                    this.addRow(row, rows);
+                }
+            } else if (objectType != null && objectType.equals("Schema")) {
+                try {
+                    RolapConnection rolapConnection = ((MondrianOlap4jConnection)connection).getMondrianConnection();
+                    MondrianServer mondrianServer = MondrianServer.forConnection(rolapConnection);
+                    Repository repository = mondrianServer.getRepository();
+                    for (Catalog catalog : catIter(connection, catNameCond())) {
+                        Map<String, RolapSchema> schemas = repository.getRolapSchemas(rolapConnection, catalog.getDatabase().getName(), catalog.getName());
+                        String catalogStr = null;
+                        if (schemas != null && !schemas.isEmpty()) {
+                            String catalogUrl = ((RolapSchema)((Map.Entry<?, ?>)schemas.entrySet().iterator().next()).getValue()).getInternalConnection().getCatalogName();
+                            catalogStr = Util.readVirtualFileAsString(catalogUrl);
+                        }
+
+                        Row row = new Row();
+                        row.set(METADATA.name, catalogStr);
+                        this.addRow(row, rows);
+                    }
+                } catch (IOException ioe) {
+                    throw new RuntimeException(ioe);
+                }
+            }
+        }
+
+        protected void setProperty(PropertyDefinition propertyDef, String value) {
+            switch (propertyDef) {
+                default:
+                    super.setProperty(propertyDef, value);
+                case Content:
+            }
+        }
+
+        static {
+            METADATA = new Column("METADATA", Type.String, (Enumeration)null, false, false, "An XML document that describes the object requested by the restriction.");
+            ObjectType = new Column("ObjectType", Type.String, (Enumeration)null, true, true, "Can be Database or Schema. If Database returns datasources xml file. If Schema returns schema xml file by DatabaseId.");
+            DatabaseID = new Column("DatabaseID", Type.String, (Enumeration)null, true, true, (String)null);
+            ObjectExpansion = new Column("ObjectExpansion", Type.String, (Enumeration)null, true, true, (String)null);
         }
     }
 

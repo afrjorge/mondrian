@@ -246,6 +246,8 @@ public abstract class MondrianServer {
 
     public abstract AggregationManager getAggregationManager();
 
+    public abstract Repository getRepository();
+
     /**
      * Description of the version of the server.
      */

@@ -13,9 +13,10 @@
   <description>Mondrian OLAP Engine</description>
   <url>http://mondrian.pentaho.com</url>
   <properties>
-    <project.version.minor>000</project.version.minor>
     <driver.version>${project.version}</driver.version>
-    <project.version.major>8</project.version.major>
+    <!-- When connecting with Power BI trick it into accepting the version, it only supports MS SQL Server min version 2008 -->
+    <project.version.major>2008</project.version.major>
+    <project.version.minor>1</project.version.minor>
     <schema.version>3</schema.version>
     <driver.name>Mondrian olap4j driver</driver.name>
     <driver.version.minor>${project.version.minor}</driver.version.minor>

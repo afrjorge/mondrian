@@ -467,6 +467,10 @@ class MondrianServerImpl
             LOGGER.warn("Failed to register JMX MBean", e);
         }
     }
+
+    public Repository getRepository() {
+        return this.repository;
+    }
 }
 
 // End MondrianServerImpl.java

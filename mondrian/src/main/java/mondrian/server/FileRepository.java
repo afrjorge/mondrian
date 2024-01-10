@@ -152,6 +152,17 @@ public class FileRepository implements Repository {
             datasourceInfo =
                 serverInfo.datasourceMap.get(databaseName);
 
+            // In some cases (e.g. Power BI connecting) the database name is actually the catalog name, search for a match
+            if ( datasourceInfo == null && databaseName.equals( catalogName ) ) {
+              Map.Entry<String, DatabaseInfo> found = null;
+              for ( Map.Entry<String, DatabaseInfo> dbInfo : serverInfo.datasourceMap.entrySet() ) {
+                if ( dbInfo.getValue().catalogMap.containsKey( catalogName ) ) {
+                    datasourceInfo = dbInfo.getValue();
+                  break;
+                }
+              }
+            }
+
             // For legacy, we have to check if the DataSourceInfo matches.
             // We used to mix up DS Info and DS names. The behavior above is
             // the right one. The one below is not.
@@ -194,7 +205,7 @@ public class FileRepository implements Repository {
                 LOGGER.warn("Failed getting connection. Skipping", e);
               }
             }
-        } else {
+        } else {//here
           CatalogInfo namedCatalogInfo =
                 datasourceInfo.catalogMap.get(catalogName);
           if (namedCatalogInfo == null) {
@@ -431,6 +442,10 @@ public class FileRepository implements Repository {
     // tests
     RepositoryContentFinder getRepositoryContentFinder() {
         return repositoryContentFinder;
+    }
+
+    public String getContent() {
+        return this.repositoryContentFinder.getContent();
     }
 }
 
