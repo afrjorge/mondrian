@@ -33,6 +33,7 @@ import org.eigenbase.xom.Parser;
 import org.olap4j.mdx.IdentifierNode;
 import org.olap4j.mdx.IdentifierSegment;
 
+import java.io.PrintWriter;
 import java.util.*;
 
 /**
@@ -102,6 +103,10 @@ public class RolapCube extends CubeBase {
         new HashMap<RolapLevel, RolapCubeLevel>();
 
     final BitKey closureColumnBitKey;
+
+    final List<RolapAction> actionList = new ArrayList();
+
+    final List<RolapWriteBackTable> writebackTableList = new ArrayList();
 
     /**
      * Used for virtual cubes.
@@ -2787,6 +2792,66 @@ public class RolapCube extends CubeBase {
         return measuresHierarchy.getMemberReader().getMembers();
     }
 
+    public Formula createNamedSet(String xml) {
+        MondrianDef.NamedSet xmlNamedSet;
+        try {
+            Parser xmlParser = XOMUtil.createDefaultParser();
+            DOMWrapper def = xmlParser.parse(xml);
+            String tagName = def.getTagName();
+            if (!tagName.equals("NamedSet")) {
+                throw new XOMException("Got <" + tagName + "> when expecting <NamedSet>");
+            }
+
+            xmlNamedSet = new MondrianDef.NamedSet(def);
+        } catch (XOMException var10) {
+            throw Util.newError(var10, "Error while creating named set from XML [" + xml + "]");
+        }
+
+        Formula var12;
+        try {
+            this.loadInProgress = true;
+            List<Formula> setList = new ArrayList();
+            this.createCalcMembersAndNamedSets(Collections.emptyList(), Collections.singletonList(xmlNamedSet), new ArrayList(), setList, this, true);
+
+            assert setList.size() == 1;
+
+            var12 = (Formula)setList.get(0);
+        } finally {
+            this.loadInProgress = false;
+        }
+
+        return var12;
+    }
+
+    public void createNamedSet(Formula formula) {
+        Statement statement = this.schema.getInternalConnection().getInternalStatement();
+
+        try {
+            Query query = new Query(statement, this, new Formula[]{formula}, new QueryAxis[0], (QueryAxis)null, new QueryPart[0], new Parameter[0], false);
+            query.createValidator().validate(formula);
+            this.namedSetList.add(formula);
+        } finally {
+            statement.close();
+        }
+
+    }
+
+    public RolapMember createCalculatedMember(Formula formula) {
+        Statement statement = this.schema.getInternalConnection().getInternalStatement();
+
+        RolapMember var4;
+        try {
+            Query query = new Query(statement, this, new Formula[]{formula}, new QueryAxis[0], (QueryAxis)null, new QueryPart[0], new Parameter[0], false);
+            query.createValidator().validate(formula);
+            this.calculatedMemberList.add(formula);
+            var4 = (RolapMember)formula.getMdxMember();
+        } finally {
+            statement.close();
+        }
+
+        return var4;
+    }
+
     public Member createCalculatedMember(String xml) {
         MondrianDef.CalculatedMember xmlCalcMember;
         try {
@@ -3231,6 +3296,50 @@ public class RolapCube extends CubeBase {
       }
       cubesList.addAll(cubes);
       return cubesList;
+    }
+
+    public void flushCache(RolapConnection rolapConnection) {
+        CacheControl cacheControl = rolapConnection.getCacheControl((PrintWriter)null);
+        cacheControl.flush(cacheControl.createMeasuresRegion(this));
+        Iterator var3 = this.hierarchyList.iterator();
+
+        while(var3.hasNext()) {
+            RolapHierarchy rolapHierarchy = (RolapHierarchy)var3.next();
+            if (rolapHierarchy instanceof RolapCubeHierarchy) {
+                RolapCubeHierarchy rolapCubeHierarchy = (RolapCubeHierarchy)rolapHierarchy;
+                MemberReader memberReader = rolapCubeHierarchy.getMemberReader();
+                if (memberReader instanceof RolapCubeHierarchy.CacheRolapCubeHierarchyMemberReader) {
+                    RolapCubeHierarchy.CacheRolapCubeHierarchyMemberReader crhmr = (RolapCubeHierarchy.CacheRolapCubeHierarchyMemberReader)memberReader;
+                    ((MemberCacheHelper)crhmr.getMemberCache()).flushCache();
+                    crhmr.getRolapCubeMemberCacheHelper().flushCache();
+                }
+
+                RolapHierarchy sharedRolapHierarchy = rolapCubeHierarchy.getRolapHierarchy();
+                memberReader = sharedRolapHierarchy.getMemberReader();
+                if (memberReader instanceof SmartMemberReader) {
+                    SmartMemberReader smartMemberReader = (SmartMemberReader)memberReader;
+                    MemberCacheHelper memberCacheHelper = (MemberCacheHelper)smartMemberReader.getMemberCache();
+                    memberCacheHelper.flushCache();
+                }
+            }
+        }
+
+    }
+
+    public RolapDrillThroughAction getDefaultDrillThroughAction() {
+        Iterator var1 = this.actionList.iterator();
+
+        while(var1.hasNext()) {
+            RolapAction action = (RolapAction)var1.next();
+            if (action instanceof RolapDrillThroughAction) {
+                RolapDrillThroughAction rolapDrillThroughAction = (RolapDrillThroughAction)action;
+                if (rolapDrillThroughAction.getIsDefault()) {
+                    return rolapDrillThroughAction;
+                }
+            }
+        }
+
+        return null;
     }
 }
 

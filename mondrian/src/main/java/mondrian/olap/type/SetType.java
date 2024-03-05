@@ -13,6 +13,7 @@ package mondrian.olap.type;
 
 import mondrian.olap.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -79,6 +80,16 @@ public class SetType implements Type {
             return definitely;
         }
         return elementType.usesHierarchy(hierarchy, definitely);
+    }
+
+    public List<Hierarchy> getHierarchies() {
+        if (this.elementType instanceof TupleType) {
+            return ((TupleType)this.elementType).getHierarchies();
+        } else {
+            ArrayList<Hierarchy> result = new ArrayList();
+            result.add(this.getHierarchy());
+            return result;
+        }
     }
 
     public Dimension getDimension() {

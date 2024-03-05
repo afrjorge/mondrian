@@ -23,7 +23,7 @@ import org.olap4j.metadata.NamedSet;
  * @author jhyde
  * @since Nov 12, 2007
  */
-class MondrianOlap4jNamedSet
+public class MondrianOlap4jNamedSet
     extends MondrianOlap4jMetadataElement
     implements NamedSet, Named
 {
@@ -47,6 +47,10 @@ class MondrianOlap4jNamedSet
             olap4jCube.olap4jSchema.olap4jCatalog.olap4jDatabaseMetaData
                 .olap4jConnection;
         return olap4jConnection.toOlap4j(namedSet.getExp());
+    }
+
+    public mondrian.olap.NamedSet getNamedSet() {
+        return this.namedSet;
     }
 
     public String getName() {

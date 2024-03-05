@@ -181,7 +181,8 @@ public class FileRepository implements Repository {
                     pl.remove(RolapConnectionProperties.JdbcUser.name());
                     pl.remove(RolapConnectionProperties.JdbcPassword.name());
 
-                    if (pl.toString().equals(databaseName)) {
+                    //if (pl.toString().equals(databaseName)) {
+                    if (databaseName.contains(pl.toString())) { // TODO fix
                         datasourceInfo = infos;
                     }
                 }
@@ -446,6 +447,11 @@ public class FileRepository implements Repository {
 
     public String getContent() {
         return this.repositoryContentFinder.getContent();
+    }
+
+    public void setContent(String content) {
+        this.repositoryContentFinder.setContent(content);
+        this.clearServerInfo();
     }
 }
 

@@ -57,6 +57,15 @@ public interface MdxParserValidator {
             boolean strictValidation);
 
         /**
+         * Creates a {@link mondrian.olap.Query} object.
+         * Override this function to make your kind of query.
+         */
+        DmvQuery makeDmvQuery(
+            String tableName,
+            List<String> columns,
+            Exp whereExpression);
+
+        /**
          * Creates a {@link mondrian.olap.DrillThrough} object.
          */
         DrillThrough makeDrillThrough(

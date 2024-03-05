@@ -69,6 +69,13 @@ Should prime with {@link #ResultLimit mondrian.result.limit}.
         <Default>1</Default>
     </PropertyDefinition>
     <PropertyDefinition>
+      <Name>IdleOrphanSessionTimeout</Name>
+      <Path>mondrian.server.idleOrphanSessionTimeout</Path>
+      <Description>TODO</Description>
+      <Type>int</Type>
+      <Default>3600</Default>
+    </PropertyDefinition>
+    <PropertyDefinition>
         <Name>TestName</Name>
         <Path>mondrian.test.Name</Path>
         <Category>Testing</Category>

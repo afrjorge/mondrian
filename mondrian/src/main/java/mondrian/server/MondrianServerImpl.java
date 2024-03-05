@@ -468,6 +468,20 @@ class MondrianServerImpl
         }
     }
 
+    public List<Statement> getStatements(String sessionId) {
+        List<Statement> result = new ArrayList();
+        Iterator var3 = this.statementMap.values().iterator();
+
+        while(var3.hasNext()) {
+            Statement statement = (Statement)var3.next();
+            if (statement.getMondrianConnection().getConnectInfo().get("sessionId").equals(sessionId)) {
+                result.add(statement);
+            }
+        }
+
+        return result;
+    }
+
     public Repository getRepository() {
         return this.repository;
     }

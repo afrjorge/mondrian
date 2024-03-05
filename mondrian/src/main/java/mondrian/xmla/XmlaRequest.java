@@ -84,6 +84,10 @@ public interface XmlaRequest {
      * @return Id of the session
      */
     String getSessionId();
+
+    String getAuthenticatedUser();
+
+    String[] getAuthenticatedUserGroups();
 }
 
 // End XmlaRequest.java

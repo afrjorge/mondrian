@@ -33,8 +33,8 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicLong;
@@ -92,6 +92,8 @@ public class SqlStatement {
   private State state = State.FRESH;
   private final long id;
   private Functor1<Void, Statement> callback;
+
+  public static HashMap<Statement, RolapDrillThroughAction> DrillThroughResults = new HashMap();
 
   /**
    * Creates a SqlStatement.
@@ -609,7 +611,13 @@ public class SqlStatement {
      * @throws SQLException on error
      */
     public void close() throws SQLException {
+      Statement statement = this.sqlStatement.getResultSet().getStatement();
+
       sqlStatement.close();
+
+      if (SqlStatement.DrillThroughResults.containsKey(statement)) {
+        SqlStatement.DrillThroughResults.remove(statement);
+      }
     }
   }
 

@@ -11,7 +11,10 @@ package mondrian.server;
 
 import mondrian.olap.Util;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
 
 /**
 * Implementation of {@link mondrian.server.RepositoryContentFinder} that reads
@@ -45,6 +48,22 @@ public class UrlRepositoryContentFinder
                 url, Util.toMap(System.getProperties()));
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public void setContent(String content) {
+        try {
+            String filePath = URI.create(this.url).getPath();
+            BufferedWriter out = new BufferedWriter(new FileWriter(filePath));
+
+            try {
+                out.write(content);
+            } finally {
+                out.close();
+            }
+
+        } catch (IOException var8) {
+            throw new RuntimeException(var8);
         }
     }
 

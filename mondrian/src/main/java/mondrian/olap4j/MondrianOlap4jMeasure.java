@@ -70,6 +70,10 @@ class MondrianOlap4jMeasure
         }
         return Datatype.STRING;
     }
+
+    public String getDisplayFolder() {
+        return (String)this.member.getPropertyValue("DISPLAY_FOLDER");
+    }
 }
 
 // End MondrianOlap4jMeasure.java

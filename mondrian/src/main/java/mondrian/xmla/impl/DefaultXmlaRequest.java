@@ -41,7 +41,12 @@ public class DefaultXmlaRequest
 
     /* EXECUTE content */
     private String statement;
-    private boolean drillthrough;
+    private boolean drillThrough;
+    private String command;
+    private Map<String, String> parameters = Collections.unmodifiableMap(new HashMap());
+    private ServerObject serverObject;
+
+    private String objectDefinition;
 
     /* DISCOVER contnet */
     private String requestType;
@@ -50,6 +55,8 @@ public class DefaultXmlaRequest
     private final String username;
     private final String password;
     private final String sessionId;
+    private String authenticatedUser = null;
+    private String[] authenticatedUserGroups = null;
 
     public DefaultXmlaRequest(
         final Element xmlaRoot,
@@ -86,6 +93,10 @@ public class DefaultXmlaRequest
         return properties;
     }
 
+    public Map<String, String> getParameters() {
+        return this.parameters;
+    }
+
     public Map<String, Object> getRestrictions() {
         if (method != Method.DISCOVER) {
             throw new IllegalStateException(
@@ -106,6 +117,10 @@ public class DefaultXmlaRequest
         return roleName;
     }
 
+    public String getCommand() {
+        return this.command;
+    }
+
     public String getRequestType() {
         if (method != Method.DISCOVER) {
             throw new IllegalStateException(
@@ -117,11 +132,18 @@ public class DefaultXmlaRequest
     public boolean isDrillThrough() {
         if (method != Method.EXECUTE) {
             throw new IllegalStateException(
-                "Only METHOD_EXECUTE determines drillthrough");
+                "Only METHOD_EXECUTE determines drill-through");
         }
-        return drillthrough;
+        return drillThrough;
     }
 
+    public ServerObject getServerObject() {
+        return this.serverObject;
+    }
+
+    public String getObjectDefinition() {
+        return this.objectDefinition;
+    }
 
     protected final void init(Element xmlaRoot) throws XmlaException {
         if (NS_XMLA.equals(xmlaRoot.getNamespaceURI())) {
@@ -256,6 +278,11 @@ public class DefaultXmlaRequest
                 Util.newError(buf.toString()));
         }
         initProperties(childElems[0]); // <Properties><PropertyList>
+
+        childElems = XmlaUtil.filterChildElements(executeRoot, NS_XMLA, "Parameters");
+        if (childElems.length > 0) {
+            this.initParameters(childElems[0]);
+        }
     }
 
     private void initRestrictions(Element restrictionsRoot)
@@ -385,26 +412,117 @@ public class DefaultXmlaRequest
         this.properties = Collections.unmodifiableMap(properties);
     }
 
+    private void initParameters(Element parameterElement) throws XmlaException {
+        Map<String, String> parameters = new HashMap();
+        NodeList nlst = parameterElement.getChildNodes();
+        int i = 0;
+
+        for(int nlen = nlst.getLength(); i < nlen; ++i) {
+            Node n = nlst.item(i);
+            if (n instanceof Element) {
+                String name = null;
+                Element[] nameElems = XmlaUtil.filterChildElements((Element)n, NS_XMLA, "Name");
+                if (nameElems.length > 0) {
+                    name = XmlaUtil.textInElement(nameElems[0]);
+                    String value = null;
+                    Element[] valueElems = XmlaUtil.filterChildElements((Element)n, NS_XMLA, "Value");
+                    if (nameElems.length > 0) {
+                        value = XmlaUtil.textInElement(valueElems[0]);
+                    }
+
+                    parameters.put(name, value);
+                }
+            }
+        }
+
+        this.parameters = Collections.unmodifiableMap(parameters);
+    }
 
     private void initCommand(Element commandRoot) throws XmlaException {
-        Element[] childElems =
-            XmlaUtil.filterChildElements(
-                commandRoot,
-                NS_XMLA,
-                "Statement");
-        if (childElems.length != 1) {
-            StringBuilder buf = new StringBuilder(100);
-            buf.append(MSG_INVALID_XMLA);
-            buf.append(": Wrong number of Statement elements: ");
-            buf.append(childElems.length);
-            throw new XmlaException(
-                CLIENT_FAULT_FC,
-                HSB_BAD_STATEMENT_CODE,
-                HSB_BAD_STATEMENT_FAULT_FS,
-                Util.newError(buf.toString()));
+        Element[] commandElements = XmlaUtil.filterChildElements(commandRoot, (String)null, (String)null);
+        StringBuilder buf;
+        if (commandElements.length != 1) {
+            buf = new StringBuilder(100);
+            buf.append("Invalid XML/A message");
+            buf.append(": Wrong number of Command children elements: ");
+            buf.append(commandElements.length);
+            throw new XmlaException("Client", "00HSBB07", "XMLA SOAP bad Execute Command element", Util.newError(buf.toString()));
+        } else {
+            this.command = commandElements[0].getLocalName();
+            if (this.command != null && this.command.toUpperCase().equals("STATEMENT")) {
+                this.statement = XmlaUtil.textInElement(commandElements[0]).replaceAll("\\r", "");
+                this.drillThrough = this.statement.toUpperCase().indexOf("DRILLTHROUGH") != -1;
+            } else if (this.command != null && this.command.toUpperCase().equals("ALTER")) {
+                Element[] objectElements = XmlaUtil.filterChildElements(commandElements[0], (String)null, "Object");
+                if (objectElements.length > 1) {
+                    buf = new StringBuilder(100);
+                    buf.append("Invalid XML/A message");
+                    buf.append(": Wrong number of Objects elements: ");
+                    buf.append(objectElements.length);
+                    throw new XmlaException("Client", "00HSBB09", "XMLA SOAP bad Discover or Execute PropertyList element", Util.newError(buf.toString()));
+                }
+
+                if (objectElements.length > 0) {
+                    String databaseId = null;
+                    Element[] databaseIdElements = XmlaUtil.filterChildElements(objectElements[0], (String)null, "DatabaseID");
+                    if (databaseIdElements.length > 1) {
+                        buf = new StringBuilder(100);
+                        buf.append("Invalid XML/A message");
+                        buf.append(": Wrong number of DatabaseID elements: ");
+                        buf.append(databaseIdElements.length);
+                        throw new XmlaException("Client", "00HSBB09", "XMLA SOAP bad Discover or Execute PropertyList element", Util.newError(buf.toString()));
+                    }
+
+                    if (databaseIdElements.length > 0) {
+                        databaseId = XmlaUtil.textInElement(databaseIdElements[0]).replaceAll("\\r", "");
+                    }
+
+                    this.serverObject = new ServerObject(databaseId);
+                }
+
+                Element[] objectDefinitionElements = XmlaUtil.filterChildElements(commandElements[0], (String)null, "ObjectDefinition");
+                if (objectDefinitionElements.length > 1) {
+                    buf = new StringBuilder(100);
+                    buf.append("Invalid XML/A message");
+                    buf.append(": Wrong number of ObjectDefinition elements: ");
+                    buf.append(objectDefinitionElements.length);
+                    throw new XmlaException("Client", "00HSBB09", "XMLA SOAP bad Discover or Execute PropertyList element", Util.newError(buf.toString()));
+                }
+
+                if (objectDefinitionElements.length > 0) {
+                    this.objectDefinition = XmlaUtil.textInElement(objectDefinitionElements[0]);
+                }
+            } else if (this.command == null || !this.command.toUpperCase().equals("CANCEL")) {
+                buf = new StringBuilder(100);
+                buf.append("Invalid XML/A message");
+                buf.append(": Wrong child of Command elements: ");
+                buf.append(this.command);
+                throw new XmlaException("Client", "00HSBB07", "XMLA SOAP bad Execute Command element", Util.newError(buf.toString()));
+            }
+
         }
-        statement = XmlaUtil.textInElement(childElems[0]).replaceAll("\\r", "");
-        drillthrough = statement.toUpperCase().indexOf("DRILLTHROUGH") != -1;
+    }
+
+    public void setProperty(String key, String value) {
+        HashMap<String, String> newProperties = new HashMap(this.properties);
+        newProperties.put(key, value);
+        this.properties = Collections.unmodifiableMap(newProperties);
+    }
+
+    public void setAuthenticatedUser(String authenticatedUser) {
+        this.authenticatedUser = authenticatedUser;
+    }
+
+    public String getAuthenticatedUser() {
+        return this.authenticatedUser;
+    }
+
+    public void setAuthenticatedUserGroups(String[] authenticatedUserGroups) {
+        this.authenticatedUserGroups = authenticatedUserGroups;
+    }
+
+    public String[] getAuthenticatedUserGroups() {
+        return this.authenticatedUserGroups;
     }
 }
 

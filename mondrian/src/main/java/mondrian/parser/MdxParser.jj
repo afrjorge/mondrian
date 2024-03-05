@@ -247,6 +247,7 @@ TOKEN :
     | <XOR: "XOR">
     | <WITH: "WITH">
     | <EXISTING: "EXISTING">
+    | <$SYSTEM: "$SYSTEM">
 }
 
 // White space
@@ -304,6 +305,7 @@ MORE :
 TOKEN :
 {
     < ASTERISK: "*" >
+    | <ATSIGN: "@">
     | < BANG: "!" >
     | < COLON : ":" >
     | < COMMA : "," >
@@ -458,6 +460,10 @@ Id.NameSegment nameSegment() :
         // Allow a non-reserved keyword to be converted back into an identifier
         // if it is not in a context where it is meaningful.
         return new Id.NameSegment(id, Id.Quoting.UNQUOTED);
+    }
+|   <ATSIGN> <ID> {
+        //return new Id.NameSegment(token.image.substring(1), Id.Quoting.UNQUOTED);
+        return new Id.NameSegment("@" + this.token.image, Id.Quoting.UNQUOTED);
     }
 |   <ID> {
         return new Id.NameSegment(token.image, Id.Quoting.UNQUOTED);
@@ -991,6 +997,8 @@ QueryPart statement() :
 }
 {
     (
+        qp = dmvSelectStatement()
+    |
         qp = selectStatement()
     |
         qp = drillthroughStatement()
@@ -1012,6 +1020,38 @@ QueryPart selectOrDrillthroughStatement() :
     }
 |   qp = drillthroughStatement() {
         return qp;
+    }
+}
+
+DmvQuery dmvSelectStatement() :
+{
+     Id.NameSegment column;
+     ArrayList<String> columns = new ArrayList<String>();
+     Id.NameSegment table;
+     Exp w = null;
+}
+{
+    <SELECT>
+    (
+        column = nameSegment() {
+            columns.add( column.name );
+        }
+        (
+            <COMMA>
+            column = nameSegment() {
+                columns.add( column.name );
+            }
+        )*
+    )?
+    <FROM> <$SYSTEM> <DOT> table = nameSegment()
+    (
+        <WHERE> w = expression()
+    )?
+    {
+        return factory.makeDmvQuery(
+            table.name,
+            columns,
+            w);
     }
 }
 

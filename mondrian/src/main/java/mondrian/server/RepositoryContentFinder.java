@@ -20,6 +20,8 @@ package mondrian.server;
 public interface RepositoryContentFinder {
     String getContent();
 
+    void setContent(String content);
+
     void shutdown();
 }
 

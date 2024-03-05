@@ -28,6 +28,9 @@ public class StringRepositoryContentFinder
         return content;
     }
 
+    public void setContent(String content) {
+    }
+
     public void shutdown() {
         // nothing to do
     }

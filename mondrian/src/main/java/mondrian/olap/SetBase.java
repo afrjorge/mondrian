@@ -16,6 +16,7 @@ import mondrian.olap.type.*;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,6 +35,7 @@ public class SetBase extends OlapElementBase implements NamedSet {
     private final String uniqueName;
     private Exp exp;
     private boolean validated;
+    private String displayFolder;
 
     /**
      * Creates a SetBase.
@@ -99,6 +101,14 @@ public class SetBase extends OlapElementBase implements NamedSet {
         return description;
     }
 
+    public String getDisplayFolder() {
+        return displayFolder;
+    }
+
+    public List<Hierarchy> getHierarchies() {
+        return ((SetType)this.exp.getType()).getHierarchies();
+    }
+
     public Hierarchy getHierarchy() {
         return exp.getType().getHierarchy();
     }
@@ -119,6 +129,10 @@ public class SetBase extends OlapElementBase implements NamedSet {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public void setDisplayFolder(String displayFolder) {
+        this.displayFolder = displayFolder;
     }
 
     public void setAnnotationMap(Map<String, Annotation> annotationMap) {

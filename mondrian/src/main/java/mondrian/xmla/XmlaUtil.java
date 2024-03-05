@@ -372,6 +372,14 @@ way too noisy
             public String getSessionId() {
                 return null;
             }
+
+            public String getAuthenticatedUser() {
+                return null;
+            }
+
+            public String[] getAuthenticatedUserGroups() {
+                return null;
+            }
         };
         final Rowset rowset =
             rowsetDefinition.getRowset(

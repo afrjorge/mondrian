@@ -51,6 +51,9 @@ public interface XmlaConstants {
 
     public static final String SOAP_PREFIX = "SOAP-ENV";
 
+    public static final String NS_AS_ENGINE =
+        "http://schemas.microsoft.com/analysisservices/2003/engine";
+
     /**
      * Soap Header mustUnderstand attribute name.
      */
@@ -78,6 +81,9 @@ public interface XmlaConstants {
     // Username and password tokens
     public static final String CONTEXT_XMLA_USERNAME = "username";
     public static final String CONTEXT_XMLA_PASSWORD = "password";
+
+    public static final String CONTEXT_XMLA_AUTHENTICATED_USER = "AuthenticatedUser";
+    public static final String CONTEXT_XMLA_AUTHENTICATED_USER_GROUPS = "AuthenticatedUserGroups";
 
     // context key for session state storage
     public static final String CONTEXT_XMLA_SESSION_STATE = "SessionState";

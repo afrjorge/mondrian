@@ -246,6 +246,8 @@ public abstract class MondrianServer {
 
     public abstract AggregationManager getAggregationManager();
 
+    public abstract List<Statement> getStatements(String var1);
+
     public abstract Repository getRepository();
 
     /**
