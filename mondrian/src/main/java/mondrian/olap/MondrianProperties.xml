@@ -69,6 +69,16 @@ Should prime with {@link #ResultLimit mondrian.result.limit}.
         <Default>1</Default>
     </PropertyDefinition>
     <PropertyDefinition>
+      <Name>IdleOrphanSessionTimeout</Name>
+      <Path>mondrian.server.idleOrphanSessionTimeout</Path>
+      <Description>
+Integer property that defines how long, in seconds, orphaned sessions will be retained in server memory.
+An orphaned session is one that no longer has an associated connection. The default is 3600 seconds.
+      </Description>
+      <Type>int</Type>
+      <Default>3600</Default>
+    </PropertyDefinition>
+    <PropertyDefinition>
         <Name>TestName</Name>
         <Path>mondrian.test.Name</Path>
         <Category>Testing</Category>

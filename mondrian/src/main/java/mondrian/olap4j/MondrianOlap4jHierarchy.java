@@ -124,4 +124,12 @@ public class MondrianOlap4jHierarchy extends MondrianOlap4jMetadataElement imple
   protected OlapElement getOlapElement() {
     return hierarchy;
   }
+
+  public String getDisplayFolder() {
+    return hierarchy.getDisplayFolder();
+  }
+
+  public mondrian.olap.Hierarchy getHierarchy() {
+    return hierarchy;
+  }
 }

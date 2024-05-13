@@ -91,8 +91,8 @@ public class RolapCubeHierarchy extends RolapHierarchy {
   public RolapCubeHierarchy( RolapCubeDimension cubeDimension, MondrianDef.CubeDimension cubeDim,
                              RolapHierarchy rolapHierarchy, String subName, int ordinal, RolapCube factCube ) {
     super( cubeDimension, subName, applyPrefix( cubeDim, rolapHierarchy.getCaption() ), rolapHierarchy.isVisible(),
-      applyPrefix( cubeDim, rolapHierarchy.getDescription() ), rolapHierarchy.hasAll(), null,
-      rolapHierarchy.getAnnotationMap() );
+      applyPrefix( cubeDim, rolapHierarchy.getDescription() ), rolapHierarchy.getDisplayFolder(),
+      rolapHierarchy.hasAll(), null, rolapHierarchy.getAnnotationMap() );
     this.ordinal = ordinal;
     final boolean cubeIsVirtual = cubeDimension.getCube().isVirtual();
 

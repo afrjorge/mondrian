@@ -47,6 +47,7 @@ public class DefaultXmlaRequest implements XmlaRequest, XmlaConstants {
   /* EXECUTE content */
   private String statement;
   private boolean drillThrough;
+  private String command;
 
   /* DISCOVER content */
   private String requestType;
@@ -55,6 +56,8 @@ public class DefaultXmlaRequest implements XmlaRequest, XmlaConstants {
   private final String username;
   private final String password;
   private final String sessionId;
+  private String authenticatedUser = null;
+  private String[] authenticatedUserGroups = null;
 
   public DefaultXmlaRequest( final Element xmlaRoot, final String roleName, final String username,
                              final String password, final String sessionId ) throws XmlaException {
@@ -103,6 +106,10 @@ public class DefaultXmlaRequest implements XmlaRequest, XmlaConstants {
 
   public String getRoleName() {
     return roleName;
+  }
+
+  public String getCommand() {
+    return this.command;
   }
 
   public String getRequestType() {
@@ -288,17 +295,50 @@ public class DefaultXmlaRequest implements XmlaRequest, XmlaConstants {
     this.properties = Collections.unmodifiableMap( localProperties );
   }
 
-
   private void initCommand( Element commandRoot ) throws XmlaException {
-    Element[] childElems = XmlaUtil.filterChildElements( commandRoot, NS_XMLA, "Statement" );
+    Element[] commandElements = XmlaUtil.filterChildElements( commandRoot, null, null );
 
-    if ( childElems.length != 1 ) {
-      String buf = MSG_INVALID_XMLA + ": Wrong number of Statement elements: " + childElems.length;
-      throw new XmlaException( CLIENT_FAULT_FC, HSB_BAD_STATEMENT_CODE, HSB_BAD_STATEMENT_FAULT_FS,
-        Util.newError( buf ) );
+    if ( commandElements.length != 1 ) {
+      String buf = MSG_INVALID_XMLA + ": Wrong number of Command children elements: " + commandElements.length;
+      throw new XmlaException( CLIENT_FAULT_FC, HSB_BAD_COMMAND_CODE, HSB_BAD_COMMAND_FAULT_FS, Util.newError( buf ) );
+    } else {
+      this.command = commandElements[ 0 ].getLocalName();
+
+      if ( this.command == null || this.command.isEmpty() ) {
+        throw new XmlaException( CLIENT_FAULT_FC, HSB_BAD_COMMAND_CODE, HSB_BAD_COMMAND_FAULT_FS,
+          Util.newError( MSG_INVALID_XMLA + ": Command not found" ) );
+      }
+
+      if ( this.command.equalsIgnoreCase( "STATEMENT" ) ) {
+        this.statement = XmlaUtil.textInElement( commandElements[ 0 ] ).replaceAll( "\\r", "" );
+        this.drillThrough = this.statement.toUpperCase().contains( "DRILLTHROUGH" );
+      } else if ( !this.command.equalsIgnoreCase( "CANCEL" ) ) {
+        String buf = MSG_INVALID_XMLA + ": Wrong child of Command elements: " + this.command;
+        throw new XmlaException( CLIENT_FAULT_FC, HSB_BAD_COMMAND_CODE, HSB_BAD_COMMAND_FAULT_FS,
+          Util.newError( buf ) );
+      }
     }
+  }
 
-    statement = XmlaUtil.textInElement( childElems[ 0 ] ).replaceAll( "\\r", "" );
-    drillThrough = statement.toUpperCase().contains( "DRILLTHROUGH" );
+  public void setProperty( String key, String value ) {
+    HashMap<String, String> newProperties = new HashMap<>( this.properties );
+    newProperties.put( key, value );
+    this.properties = Collections.unmodifiableMap( newProperties );
+  }
+
+  public void setAuthenticatedUser( String authenticatedUser ) {
+    this.authenticatedUser = authenticatedUser;
+  }
+
+  public String getAuthenticatedUser() {
+    return this.authenticatedUser;
+  }
+
+  public void setAuthenticatedUserGroups( String[] authenticatedUserGroups ) {
+    this.authenticatedUserGroups = authenticatedUserGroups;
+  }
+
+  public String[] getAuthenticatedUserGroups() {
+    return this.authenticatedUserGroups;
   }
 }

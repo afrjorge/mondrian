@@ -42,6 +42,9 @@ public class MondrianOlap4jNamedSet extends MondrianOlap4jMetadataElement implem
     return olap4jConnection.toOlap4j( namedSet.getExp() );
   }
 
+  public mondrian.olap.NamedSet getNamedSet() {
+    return namedSet;
+  }
 
   public String getName() {
     return namedSet.getName();

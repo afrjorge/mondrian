@@ -118,6 +118,7 @@ public class RolapHierarchy extends HierarchyBase {
   private static final String ALL_LEVEL_CARDINALITY = "1";
   private final Map<String, Annotation> annotationMap;
   final RolapHierarchy closureFor;
+  private final String displayFolder;
 
   /**
    * Creates a hierarchy.
@@ -128,8 +129,10 @@ public class RolapHierarchy extends HierarchyBase {
    * @param closureFor Hierarchy for which the new hierarchy is a closure; null for regular hierarchies
    */
   RolapHierarchy( RolapDimension dimension, String subName, String caption, boolean visible, String description,
-                  boolean hasAll, RolapHierarchy closureFor, Map<String, Annotation> annotationMap ) {
+                  String displayFolder, boolean hasAll, RolapHierarchy closureFor,
+                  Map<String, Annotation> annotationMap ) {
     super( dimension, subName, caption, visible, description, hasAll );
+    this.displayFolder = displayFolder;
     this.annotationMap = annotationMap;
     this.allLevelName = "(All)";
     this.allMemberName = subName != null && ( MondrianProperties.instance().SsasCompatibleNaming.get() || name.equals(
@@ -201,7 +204,7 @@ public class RolapHierarchy extends HierarchyBase {
   RolapHierarchy( RolapCube cube, RolapDimension dimension, MondrianDef.Hierarchy xmlHierarchy,
                   MondrianDef.CubeDimension xmlCubeDimension ) {
     this( dimension, xmlHierarchy.name, xmlHierarchy.caption, xmlHierarchy.visible, xmlHierarchy.description,
-      xmlHierarchy.hasAll, null, createAnnotationMap( xmlHierarchy.annotations ) );
+      xmlHierarchy.displayFolder, xmlHierarchy.hasAll, null, createAnnotationMap( xmlHierarchy.annotations ) );
 
     assert !( this instanceof RolapCubeHierarchy );
 
@@ -358,7 +361,11 @@ public class RolapHierarchy extends HierarchyBase {
   protected Logger getLogger() {
     return LOGGER;
   }
-  
+
+  public String getDisplayFolder() {
+    return this.displayFolder;
+  }
+
   @Override
   public boolean equals( Object o ) {
     if ( this == o ) {

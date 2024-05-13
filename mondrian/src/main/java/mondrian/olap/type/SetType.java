@@ -16,6 +16,7 @@ import mondrian.olap.Hierarchy;
 import mondrian.olap.Level;
 import mondrian.olap.Util;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -81,6 +82,16 @@ import java.util.List;
     }
 
     return elementType.usesHierarchy( hierarchy, definitely );
+  }
+
+  public List<Hierarchy> getHierarchies() {
+    if ( this.elementType instanceof TupleType ) {
+      return ( (TupleType) this.elementType ).getHierarchies();
+    } else {
+      ArrayList<Hierarchy> result = new ArrayList<>();
+      result.add( this.getHierarchy() );
+      return result;
+    }
   }
 
   public Dimension getDimension() {

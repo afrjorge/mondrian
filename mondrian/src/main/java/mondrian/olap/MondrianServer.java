@@ -14,6 +14,7 @@ import mondrian.rolap.RolapConnection;
 import mondrian.rolap.RolapResultShepherd;
 import mondrian.rolap.agg.AggregationManager;
 import mondrian.server.MondrianServerRegistry;
+import mondrian.server.Repository;
 import mondrian.server.RepositoryContentFinder;
 import mondrian.server.Statement;
 import mondrian.server.monitor.Monitor;
@@ -221,6 +222,10 @@ public abstract class MondrianServer {
   public abstract Monitor getMonitor();
 
   public abstract AggregationManager getAggregationManager();
+
+  public abstract List<Statement> getStatements( String sessionId );
+
+  public abstract Repository getRepository();
 
   /**
    * Description of the version of the server.

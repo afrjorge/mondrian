@@ -66,4 +66,8 @@ class MondrianOlap4jMeasure extends MondrianOlap4jMember implements Measure {
 
     return Datatype.STRING;
   }
+
+  public String getDisplayFolder() {
+    return (String) member.getPropertyValue( Property.DISPLAY_FOLDER.getName() );
+  }
 }

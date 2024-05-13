@@ -38,6 +38,7 @@ import javax.management.NotCompliantMBeanException;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -388,5 +389,21 @@ class MondrianServerImpl extends MondrianServer implements CatalogFinder, XmlaHa
               MBeanRegistrationException e ) {
       LOGGER.warn( "Failed to register JMX MBean", e );
     }
+  }
+
+  public List<Statement> getStatements( String sessionId ) {
+    List<Statement> result = new ArrayList<>();
+
+    for ( Statement statement : statementMap.values() ) {
+      if ( statement.getMondrianConnection().getConnectInfo().get( "sessionId" ).equals( sessionId ) ) {
+        result.add( statement );
+      }
+    }
+
+    return result;
+  }
+
+  public Repository getRepository() {
+    return this.repository;
   }
 }
